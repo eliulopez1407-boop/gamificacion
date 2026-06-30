@@ -1,0 +1,372 @@
+/* Editor pedagógico del quiz (modo docente). Reutiliza los tokens de diseño del
+   sistema (--color-*, --radius-*, --shadow-*) para integrarse con el dashboard. */
+.editor-quiz {
+    margin-top: 22px;
+    text-align: left;
+}
+
+.editor-quiz-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.editor-quiz-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.editor-quiz-titulo {
+    margin: 4px 0 0;
+    font-family: var(--font-head);
+    font-size: 1.2rem;
+    color: var(--color-text);
+}
+
+.editor-quiz-progreso {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+}
+.editor-quiz-progreso[data-listo="true"] {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+    border-color: var(--color-primary-light);
+}
+
+/* --- Acordeón de preguntas --- */
+.editor-acordeon {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.editor-item {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.editor-item.is-abierta {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.editor-item-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+.editor-item-head:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+}
+.editor-item-head:hover { background: var(--color-surface-alt); }
+.editor-item.is-abierta .editor-item-head:hover { background: transparent; }
+
+/* Enunciado editable dentro del encabezado (sustituye al antiguo campo redundante). */
+.editor-item-titulo-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.editor-item-titulo-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+
+.editor-item-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+}
+.editor-item-num.is-completa {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.editor-item-titulo {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.editor-item-chevron {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.25s ease;
+}
+.editor-item.is-abierta .editor-item-chevron { transform: rotate(180deg); }
+
+.editor-item-body {
+    padding: 18px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    border-top: 1px solid var(--color-border);
+    animation: editor-rise 0.2s ease;
+}
+
+@keyframes editor-rise {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Campos de texto --- */
+.editor-campo { display: flex; flex-direction: column; gap: 6px; }
+.editor-campo > span,
+.editor-campo-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.editor-campo textarea,
+.editor-alt-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.92rem;
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.editor-campo textarea:focus,
+.editor-alt-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+/* --- Alternativas --- */
+.editor-alternativas { display: flex; flex-direction: column; gap: 8px; }
+
+.editor-alt-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.editor-alt-row.is-correcta {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary-light);
+}
+
+.editor-alt-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.editor-alt-radio input { accent-color: var(--color-primary); width: 16px; height: 16px; cursor: pointer; }
+
+.editor-alt-letra {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+}
+.editor-alt-row.is-correcta .editor-alt-letra { background: var(--color-primary); color: #fff; }
+
+/* === Sistema unificado de botones del editor ===
+   Base común: icono + etiqueta breve. Las variantes definen la jerarquía visual. */
+.editor-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.editor-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Ghost / secundario: baja carga visual (gestionar, eliminar). */
+.editor-btn-ghost {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+.editor-btn-ghost:hover:not(:disabled) {
+    background: var(--color-surface-alt);
+    border-color: var(--color-primary-light);
+}
+
+.editor-btn-peligro { color: #dc2626; }
+.editor-btn-peligro:hover:not(:disabled) { background: #fef2f2; border-color: #fecaca; }
+
+/* Acción IA: acento sutil, secundaria respecto a Publicar. */
+.editor-btn-ia {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+.editor-btn-ia:hover:not(:disabled) { background: var(--color-primary-light); color: #fff; }
+
+/* Acciones por pregunta */
+.editor-item-acciones { display: flex; justify-content: flex-end; }
+
+/* === Barra de "Añadir" (manual + IA) === */
+.editor-agregar-barra {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+.editor-btn-añadir { flex: 1; min-width: 200px; border-style: dashed; }
+
+/* Dropdown de cantidad para "Añadir con IA". */
+.editor-ia-wrap { position: relative; }
+
+.editor-ia-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 20;
+    min-width: 180px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    animation: editor-rise 0.16s ease;
+}
+
+.editor-ia-menu-titulo {
+    padding: 4px 10px 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+}
+
+.editor-ia-opcion {
+    text-align: left;
+    padding: 9px 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.editor-ia-opcion:hover { background: var(--color-primary-soft); color: var(--color-primary-dark); }
+
+.editor-ia-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--color-primary-light);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: editor-spin 0.7s linear infinite;
+}
+@keyframes editor-spin { to { transform: rotate(360deg); } }
+
+/* === Barra de publicación destacada (sticky, máxima jerarquía) === */
+.editor-publicar-barra {
+    position: sticky;
+    bottom: 0;
+    margin-top: 22px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+
+.editor-publicar-hint {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.84rem;
+    color: var(--color-text-muted);
+}
+
+/* Botón principal: color sólido, mayor tamaño y peso. */
+.editor-btn-publicar {
+    padding: 13px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+}
+.editor-btn-publicar:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-lg); }

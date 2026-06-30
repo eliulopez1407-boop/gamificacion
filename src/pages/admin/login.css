@@ -105,6 +105,61 @@
     font-size: 0.95rem;
 }
 
+.login-error {
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.login-role {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.login-role-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.login-role-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 4px;
+    background: var(--color-surface-alt);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.login-role-btn {
+    padding: 10px;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-role-btn:hover {
+    color: var(--color-primary);
+}
+
+.login-role-btn.active {
+    color: var(--color-primary-dark);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
 .login-field {
     display: flex;
     flex-direction: column;

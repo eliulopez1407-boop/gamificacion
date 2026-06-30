@@ -9,19 +9,20 @@ import './login.css';
 export function Login(){
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [rol, setRol] = useState("estudiante");
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState("");
     const outlinedPasswordId = useId();
     const navigate = useNavigate();
     const handleSubmit = (e)=>{
         e.preventDefault();
-        console.log("Iniciando sesión...");
-        console.log("Usuario:", username);
-        console.log("contraseña:", password);
         if(username === "admin" && password === "admin123"){
-            console.log("Inicio de sesión exitoso.");
+            setError("");
+            localStorage.setItem("isAuthenticated", "true");
+            localStorage.setItem("userRole", rol);
             navigate("/dashboard");
         } else {
-            console.log("Nombre de usuario o contraseña incorrectos.");
+            setError("Usuario o contraseña incorrectos.");
         }
     }
     const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -48,6 +49,30 @@ export function Login(){
                 <form className="login-card" onSubmit={handleSubmit} noValidate autoComplete="off">
                     <h1>Inicio de Sesión</h1>
                     <p className="login-card-sub">Ingresa tus credenciales para continuar.</p>
+
+                    {error && (
+                        <div className="login-error" role="alert">{error}</div>
+                    )}
+
+                    <div className="login-role">
+                        <span className="login-role-label">Ingresar como</span>
+                        <div className="login-role-options">
+                            <button
+                                type="button"
+                                className={`login-role-btn ${rol === "estudiante" ? "active" : ""}`}
+                                onClick={() => setRol("estudiante")}
+                            >
+                                Estudiante
+                            </button>
+                            <button
+                                type="button"
+                                className={`login-role-btn ${rol === "docente" ? "active" : ""}`}
+                                onClick={() => setRol("docente")}
+                            >
+                                Docente
+                            </button>
+                        </div>
+                    </div>
 
                     <label className="login-field">
                         <span>Usuario</span>

@@ -1,118 +1,174 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import './dashboard.css';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import HomeFilledIcon from '@mui/icons-material/HomeFilled';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
-import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
-import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
-import SlideshowRoundedIcon from '@mui/icons-material/SlideshowRounded';
-import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { FileUpload } from '../../components/fileupload/fileupload';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import { FileChip, FilePreviewModal, getKind, formatSize, descargarArchivo } from '../../components/archivos/ArchivoChip';
+import { procesarPdf } from '../../services/pdfService';
+
+// Lee un File como dataURL (base64) para persistirlo y poder descargarlo luego.
+const leerComoDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+});
+
+// Persiste el mapa de archivos en localStorage y lo devuelve para el setState.
+const persistirArchivos = (mapa) => {
+    try {
+        localStorage.setItem('edu_archivosMateria', JSON.stringify(mapa));
+    } catch {
+        // Ignorar errores de cuota/persistencia de localStorage
+    }
+    return mapa;
+};
+import { AsistenteIA } from './asistenteIA';
+import { GeneradorQuiz } from './GeneradorQuiz';
 import {
   List,
   ListItem,
   ListItemIcon,
   ListItemButton,
-  ListItemText
+  ListItemText,
+  Grid,
+  Card,
+  CircularProgress
 } from '@mui/material';
 
-const formatSize = (bytes) => {
-    if (bytes === null || bytes === undefined) return "—";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const getKind = (name = "") => {
-    const ext = name.split(".").pop().toLowerCase();
-    if (ext === "pdf") return "pdf";
-    if (["doc", "docx"].includes(ext)) return "word";
-    if (["xls", "xlsx", "csv"].includes(ext)) return "excel";
-    if (["ppt", "pptx"].includes(ext)) return "ppt";
-    return "other";
-};
-
-const kindMeta = {
-    pdf: { label: "Documento PDF", Icon: PictureAsPdfRoundedIcon, className: "file-pdf" },
-    word: { label: "Documento Word", Icon: DescriptionRoundedIcon, className: "file-word" },
-    excel: { label: "Hoja de cálculo Excel", Icon: TableChartRoundedIcon, className: "file-excel" },
-    ppt: { label: "Presentación PowerPoint", Icon: SlideshowRoundedIcon, className: "file-ppt" },
-    other: { label: "Documento", Icon: InsertDriveFileRoundedIcon, className: "file-other" }
-};
-
-function FileChip({ archivo, onClick }) {
-    const { Icon, className } = kindMeta[archivo.kind];
+function WidgetsRendimiento({ materia, topEstudiantes, progreso, siguientePaso, onAccion }) {
     return (
-        <button className={`file-chip ${className}`} onClick={onClick}>
-            <span className="file-chip-icon"><Icon /></span>
-            <span className="file-chip-meta">
-                <span className="file-chip-name">{archivo.name}</span>
-                <span className="file-chip-size">{archivo.sizeLabel}</span>
-            </span>
-        </button>
+        <Grid container spacing={2.5} className="widgets-rendimiento">
+            {/* Widget 1 · Top estudiantes */}
+            <Grid size={{ xs: 12, md: 4 }}>
+                <Card elevation={0} className="widget-card">
+                    <div className="widget-head">
+                        <span className="widget-icon widget-icon-gold"><WorkspacePremiumRoundedIcon /></span>
+                        <h4>Top estudiantes</h4>
+                    </div>
+                    <ol className="widget-rank">
+                        {topEstudiantes.slice(0, 3).map((est, i) => (
+                            <li key={i} className="widget-rank-item">
+                                <span className={`rank-pos rank-pos-${i + 1}`}>{i + 1}</span>
+                                <span className="widget-rank-name">{est.nombre}</span>
+                                <span className="widget-rank-points">{est.puntos} pts</span>
+                            </li>
+                        ))}
+                    </ol>
+                </Card>
+            </Grid>
+
+            {/* Widget 2 · Progreso de la materia */}
+            <Grid size={{ xs: 12, md: 4 }}>
+                <Card elevation={0} className="widget-card widget-card-center">
+                    <div className="widget-head">
+                        <span className="widget-icon widget-icon-primary"><TrendingUpRoundedIcon /></span>
+                        <h4>Progreso de la materia</h4>
+                    </div>
+                    <div className="widget-progress">
+                        <CircularProgress
+                            variant="determinate"
+                            value={progreso}
+                            size={120}
+                            thickness={5}
+                            className="widget-progress-ring"
+                        />
+                        <CircularProgress
+                            variant="determinate"
+                            value={100}
+                            size={120}
+                            thickness={5}
+                            className="widget-progress-track"
+                        />
+                        <span className="widget-progress-label">{progreso}%</span>
+                    </div>
+                    <p className="widget-progress-sub">Completado en {materia}</p>
+                </Card>
+            </Grid>
+
+            {/* Widget 3 · Acción rápida / siguiente paso */}
+            <Grid size={{ xs: 12, md: 4 }}>
+                <Card elevation={0} className="widget-card widget-card-action">
+                    <div className="widget-head">
+                        <span className="widget-icon widget-icon-accent"><AutoAwesomeRoundedIcon /></span>
+                        <h4>Siguiente paso</h4>
+                    </div>
+                    <p className="widget-action-text">{siguientePaso.descripcion}</p>
+                    <button className="widget-action-btn" onClick={() => onAccion(siguientePaso.destino)}>
+                        {siguientePaso.label}
+                        <ArrowForwardRoundedIcon sx={{ fontSize: '1.1rem' }} />
+                    </button>
+                </Card>
+            </Grid>
+        </Grid>
     );
 }
 
-function FilePreviewModal({ archivo, onClose }) {
-    if (!archivo) return null;
-    const { label, Icon, className } = kindMeta[archivo.kind];
+// Contenedor de material con uploader minimalista en la cabecera. La privacidad
+// es implícita: cada contenedor sube con su propio `isPrivate` sin pedirlo al docente.
+function MaterialContenedor({ titulo, subtitulo, Icon, vacioMsg, archivos, isPrivate, onUpload, onPreview }) {
+    const inputRef = useRef(null);
+    const [subiendo, setSubiendo] = useState(false);
+
+    const handleChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (inputRef.current) inputRef.current.value = "";
+        if (!file) return;
+        setSubiendo(true);
+        try {
+            await onUpload(file, { isPrivate });
+        } finally {
+            setSubiendo(false);
+        }
+    };
+
     return (
-        <div className="preview-backdrop" onClick={onClose}>
-            <div className="preview-panel" onClick={(e) => e.stopPropagation()}>
-            <header className="preview-head">
-                <div className={`preview-head-file ${className}`}>
-                    <Icon />
-                    <div className="preview-head-text">
-                        <h3>{archivo.name}</h3>
-                        <span>{label} · {archivo.sizeLabel}</span>
+        <section className={`card material-cont ${isPrivate ? 'material-cont-privado' : ''}`}>
+            <div className="card-head material-cont-head">
+                <div className="material-cont-title">
+                    <span className={`material-cont-icon ${isPrivate ? 'is-privado' : 'is-publico'}`}>
+                        <Icon />
+                    </span>
+                    <div>
+                        <h3>{titulo}</h3>
+                        <span className="material-cont-sub">{subtitulo}</span>
                     </div>
                 </div>
-                <button className="preview-close" aria-label="Cerrar" onClick={onClose}>
-                    <CloseRoundedIcon />
+                <button
+                    className="upload-mini-btn"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={subiendo}
+                >
+                    <AddRoundedIcon sx={{ fontSize: '1.1rem' }} />
+                    {subiendo ? 'Subiendo…' : 'Subir archivo'}
                 </button>
-            </header>
+                <input ref={inputRef} type="file" hidden onChange={handleChange} />
+            </div>
 
-            <div className="preview-body">
-                    {archivo.kind === "pdf" ? (
-                        <div className="pdf-viewer">
-                            <div className="pdf-page">
-                                <span className="pdf-line w-70"></span>
-                                <span className="pdf-line w-90"></span>
-                                <span className="pdf-line w-60"></span>
-                                <span className="pdf-line w-85"></span>
-                                <span className="pdf-line w-40"></span>
-                                <span className="pdf-block"></span>
-                                <span className="pdf-line w-80"></span>
-                                <span className="pdf-line w-50"></span>
-                            </div>
-                            <span className="pdf-foot">Vista previa simulada · Página 1 de 1</span>
-                        </div>
-                    ) : (
-                        <div className="doc-preview">
-                            <div className="doc-preview-head">
-                                <span className="doc-preview-tag">Vista previa del documento</span>
-                                <h4>{archivo.name.replace(/\.[^.]+$/, "")}</h4>
-                            </div>
-                            <p className="doc-preview-text">
-                                Este es un contenido de ejemplo que simula la vista previa del
-                                documento sin depender de librerías externas. Aquí se mostraría el
-                                texto, las tablas o las diapositivas del archivo cargado por el docente.
-                            </p>
-                            <div className="doc-preview-meta">
-                                <div><span>Tipo</span><strong>{label}</strong></div>
-                                <div><span>Tamaño</span><strong>{archivo.sizeLabel}</strong></div>
-                                <div><span>Estado</span><strong>Cargado</strong></div>
-                            </div>
-                        </div>
-                    )}
-            </div>
-            </div>
-        </div>
+            {archivos.length > 0 ? (
+                <div className="file-chip-grid">
+                    {archivos.map((archivo) => (
+                        <FileChip
+                            key={archivo.id}
+                            archivo={archivo}
+                            onClick={() => onPreview(archivo)}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <p className="vacio-msg">{vacioMsg}</p>
+            )}
+        </section>
     );
 }
 
@@ -120,7 +176,15 @@ export function Dashboard() {
 
     const [pagina, setPagina] = useState("");
     const [materiaSeleccionada, setMateriaSeleccionada] = useState(null);
-    const [archivosPorMateria, setArchivosPorMateria] = useState({});
+    const [subVistaMateria, setSubVistaMateria] = useState('');
+    const [archivosPorMateria, setArchivosPorMateria] = useState(() => {
+        try {
+            const guardado = localStorage.getItem('edu_archivosMateria');
+            return guardado ? JSON.parse(guardado) : {};
+        } catch {
+            return {};
+        }
+    });
     const [archivoPreview, setArchivoPreview] = useState(null);
 
     const materias = [
@@ -145,16 +209,46 @@ export function Dashboard() {
         { nombre: "Sofía Díaz", puntos: 1090 }
     ];
 
-    const handleUploadMateria = (materia, file) => {
+    const handleUploadMateria = async (materia, file, { isPrivate = false } = {}) => {
+        const kind = getKind(file.name);
         const archivo = {
             id: `${Date.now()}-${file.name}`,
             name: file.name,
             sizeLabel: formatSize(file.size),
-            kind: getKind(file.name)
+            kind,
+            isPrivate,
+            pageCount: null,
+            thumbnail: null,
+            dataUrl: null
         };
-        setArchivosPorMateria((prev) => ({
+
+        // Guardamos el archivo original (dataURL) para permitir su descarga, y
+        // para PDFs obtenemos además páginas y miniatura reales antes de persistir.
+        try {
+            archivo.dataUrl = await leerComoDataUrl(file);
+        } catch {
+            // Sin dataURL no habrá descarga, pero el resto del flujo continúa.
+        }
+        if (kind === "pdf") {
+            try {
+                const { pageCount, thumbnail } = await procesarPdf(file);
+                archivo.pageCount = pageCount;
+                archivo.thumbnail = thumbnail;
+            } catch {
+                // Si el procesamiento falla, se guarda el archivo sin metadatos extra.
+            }
+        }
+
+        setArchivosPorMateria((prev) => persistirArchivos({
             ...prev,
             [materia]: [...(prev[materia] || []), archivo]
+        }));
+    };
+
+    const handleEliminarArchivo = (materia, id) => {
+        setArchivosPorMateria((prev) => persistirArchivos({
+            ...prev,
+            [materia]: (prev[materia] || []).filter((a) => a.id !== id)
         }));
     };
 
@@ -181,6 +275,14 @@ export function Dashboard() {
                             </ListItemIcon>
                             <ListItemText primary="Materias" />
                                 </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton className="nav-item" onClick={() => setPagina("asistente")}>
+                                <ListItemIcon className="nav-icon">
+                                <AutoAwesomeRoundedIcon sx={{ fontSize: "1.3rem" }} />
+                            </ListItemIcon>
+                            <ListItemText primary="Asistente IA" />
+                            </ListItemButton>
                         </ListItem>
                     </List>
                 </div>
@@ -305,51 +407,90 @@ export function Dashboard() {
                     <>
                         <button
                             className="back-btn"
-                            onClick={() => { setMateriaSeleccionada(null); setArchivoPreview(null); }}
+                            onClick={() => { setMateriaSeleccionada(null); setArchivoPreview(null); setSubVistaMateria('recursos'); }}
                         >
                             ← Volver
                         </button>
 
                         <h1 style={{pointerEvents:"none"}}>{materiaSeleccionada}</h1>
 
-                        <div className="materia-panel">
-                            <div className="opcion">Generar Quiz</div>
-                            <div className="opcion">Calificaciones</div>
+                        <WidgetsRendimiento
+                            materia={materiaSeleccionada}
+                            topEstudiantes={ranking}
+                            progreso={68}
+                            siguientePaso={
+                                (archivosPorMateria[materiaSeleccionada] || []).length > 0
+                                    ? { descripcion: "Ya tienes material cargado. Pon a prueba a tus estudiantes generando un quiz.", label: "Ir al Quiz", destino: "quiz" }
+                                    : { descripcion: "Aún no hay material en esta materia. Súbelo desde los contenedores y luego genera un quiz.", label: "Generar Quiz", destino: "quiz" }
+                            }
+                            onAccion={(destino) => setSubVistaMateria(destino)}
+                        />
+
+                        {/* Área de archivos siempre visible, dividida por audiencia */}
+                        <div className="materia-archivos-grid">
+                            <MaterialContenedor
+                                titulo="Material para Estudiantes"
+                                subtitulo="Visible para toda la clase"
+                                Icon={GroupsRoundedIcon}
+                                vacioMsg="Aún no has publicado material para los estudiantes."
+                                archivos={(archivosPorMateria[materiaSeleccionada] || []).filter((a) => !a.isPrivate)}
+                                isPrivate={false}
+                                onUpload={(file, opts) => handleUploadMateria(materiaSeleccionada, file, opts)}
+                                onPreview={setArchivoPreview}
+                            />
+                            <MaterialContenedor
+                                titulo="Material Exclusivo del Docente"
+                                subtitulo="Privado · solo tú puedes verlo"
+                                Icon={LockRoundedIcon}
+                                vacioMsg="No tienes material privado en esta materia."
+                                archivos={(archivosPorMateria[materiaSeleccionada] || []).filter((a) => a.isPrivate)}
+                                isPrivate={true}
+                                onUpload={(file, opts) => handleUploadMateria(materiaSeleccionada, file, opts)}
+                                onPreview={setArchivoPreview}
+                            />
                         </div>
 
-                        {(archivosPorMateria[materiaSeleccionada] || []).length > 0 && (
-                            <section className="card materia-cards">
-                                <div className="card-head">
-                                    <h3>Material subido</h3>
-                                    <span className="card-tag">
-                                        {archivosPorMateria[materiaSeleccionada].length} archivos
-                                    </span>
-                                </div>
-                                <div className="file-chip-grid">
-                                    {archivosPorMateria[materiaSeleccionada].map((archivo) => (
-                                        <FileChip
-                                            key={archivo.id}
-                                            archivo={archivo}
-                                            onClick={() => setArchivoPreview(archivo)}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
+                        <div className="materia-panel">
+                            <button
+                                className={`opcion ${subVistaMateria === 'quiz' ? 'opcion-activa' : ''}`}
+                                onClick={() => setSubVistaMateria('quiz')}
+                            >
+                                Generar Quiz
+                            </button>
+                            <button
+                                className={`opcion ${subVistaMateria === 'calificaciones' ? 'opcion-activa' : ''}`}
+                                onClick={() => setSubVistaMateria('calificaciones')}
+                            >
+                                Libro de Calificaciones
+                            </button>
+                        </div>
+
+                        {subVistaMateria === 'quiz' && (
+                            <GeneradorQuiz materia={materiaSeleccionada} />
                         )}
 
-                        <section className="card materia-upload">
-                            <div className="card-head card-head-center">
-                                <h3>Cargar archivo</h3>
-                            </div>
-                            <FileUpload onUpload={(file) => handleUploadMateria(materiaSeleccionada, file)} />
-                        </section>
+                        {subVistaMateria === 'calificaciones' && (
+                            <section className="card materia-subvista">
+                                <h3>Libro de Calificaciones de {materiaSeleccionada}</h3>
+                            </section>
+                        )}
                     </>
+                )}
+
+                {/* ASISTENTE IA */}
+                {pagina === "asistente" && (
+                    <AsistenteIA />
                 )}
 
             </main>
             </div>
 
-            <FilePreviewModal archivo={archivoPreview} onClose={() => setArchivoPreview(null)} />
+            <FilePreviewModal
+                archivo={archivoPreview}
+                onClose={() => setArchivoPreview(null)}
+                onDownload={descargarArchivo}
+                onDelete={(a) => handleEliminarArchivo(materiaSeleccionada, a.id)}
+            />
         </div>
     );
 }

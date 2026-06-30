@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
 import "./fileupload.css";
 
-export function FileUpload({ onUpload, accept }) {
+export function FileUpload({ onUpload, accept, showPrivacyToggle = false }) {
     const [file, setFile] = useState(null);
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const inputRef = useRef(null);
 
@@ -32,10 +34,18 @@ export function FileUpload({ onUpload, accept }) {
         inputRef.current.click();
     };
 
-    const handleUploadClick = () => {
-        if (file && onUpload) onUpload(file);
-        setFile(null);
-        if (inputRef.current) inputRef.current.value = "";
+    const handleUploadClick = async () => {
+        if (!file || !onUpload) return;
+        setIsUploading(true);
+        try {
+            // El callback puede ser asíncrono (p. ej. procesado de PDF).
+            await onUpload(file, { isPrivate });
+        } finally {
+            setIsUploading(false);
+            setFile(null);
+            setIsPrivate(false);
+            if (inputRef.current) inputRef.current.value = "";
+        }
     };
 
     return (
@@ -63,12 +73,26 @@ export function FileUpload({ onUpload, accept }) {
                 )}
             </div>
 
+            {showPrivacyToggle && (
+                <label className="fileupload-privacy">
+                    <input
+                        type="checkbox"
+                        checked={isPrivate}
+                        onChange={(e) => setIsPrivate(e.target.checked)}
+                    />
+                    <span className="fileupload-switch" aria-hidden="true" />
+                    <span className="fileupload-privacy-text">
+                        ¿Archivo privado (solo docente)?
+                    </span>
+                </label>
+            )}
+
             <button
                 className="fileupload-btn"
-                disabled={!file}
+                disabled={!file || isUploading}
                 onClick={handleUploadClick}
             >
-                Cargar archivo
+                {isUploading ? "Procesando…" : "Cargar archivo"}
             </button>
         </div>
     );
